@@ -1,0 +1,1872 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>私房菜管理系统</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #333;
+            line-height: 1.6;
+            padding: 15px;
+            max-width: 1200px;
+            margin: 0 auto;
+            min-height: 100vh;
+        }
+        
+        /* 模式切换按钮 */
+        .mode-switch {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            z-index: 1000;
+        }
+        
+        .mode-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .mode-btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+        
+        /* 通用样式 */
+        .header {
+            text-align: center;
+            padding: 20px 15px;
+            margin-bottom: 20px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, #ff9a9e, #fad0c4);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        h1 i {
+            color: #e74c3c;
+        }
+        
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1rem;
+            margin-bottom: 12px;
+        }
+        
+        .notice {
+            background: #fff8e1;
+            border-left: 4px solid #ffb300;
+            padding: 10px 12px;
+            border-radius: 8px;
+            margin: 12px auto;
+            max-width: 800px;
+            font-size: 0.85rem;
+        }
+        
+        .notice i {
+            color: #ff9800;
+            margin-right: 6px;
+        }
+        
+        /* 客户模式样式 */
+        .customer-view {
+            display: block;
+        }
+        
+        .admin-view {
+            display: none;
+        }
+        
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .menu-section {
+            flex: 3;
+            min-width: 300px;
+        }
+        
+        .cart-section {
+            flex: 2;
+            min-width: 300px;
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            color: #2c3e50;
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #eee;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .menu-categories {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            overflow-x: auto;
+            padding-bottom: 5px;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .category-btn {
+            padding: 8px 15px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            font-size: 0.9rem;
+        }
+        
+        .category-btn.active, .category-btn:hover {
+            background: #e74c3c;
+            color: white;
+            border-color: #e74c3c;
+        }
+        
+        .menu-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        
+        .menu-item {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .menu-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .item-image {
+            height: 140px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .item-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        
+        .menu-item:hover .item-image img {
+            transform: scale(1.05);
+        }
+        
+        .item-details {
+            padding: 15px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .item-name {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 6px;
+            line-height: 1.3;
+        }
+        
+        .item-description {
+            color: #7f8c8d;
+            font-size: 0.85rem;
+            margin-bottom: 12px;
+            flex-grow: 1;
+            line-height: 1.4;
+        }
+        
+        .item-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 8px;
+        }
+        
+        .item-price {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #e74c3c;
+        }
+        
+        .item-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .quantity-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+        }
+        
+        .quantity-btn:hover {
+            background: #e74c3c;
+            color: white;
+            border-color: #e74c3c;
+        }
+        
+        .item-quantity {
+            min-width: 34px;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .add-to-cart {
+            background: #2ecc71;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: background 0.3s ease;
+            font-size: 0.85rem;
+        }
+        
+        .add-to-cart:hover {
+            background: #27ae60;
+        }
+        
+        .cart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 18px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            position: sticky;
+            top: 20px;
+            max-height: 75vh;
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+        }
+        
+        .cart-items {
+            margin-bottom: 18px;
+            max-height: 250px;
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+        
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+        
+        .cart-item-info h4 {
+            font-size: 0.95rem;
+            margin-bottom: 4px;
+            line-height: 1.3;
+        }
+        
+        .cart-item-price {
+            color: #e74c3c;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .cart-item-controls {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .cart-total {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 15px;
+        }
+        
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+        }
+        
+        .total-amount {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #2c3e50;
+            border-top: 2px dashed #ddd;
+            padding-top: 12px;
+        }
+        
+        .cart-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 18px;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: none;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+        
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+        
+        .btn-secondary:hover {
+            background: #e9ecef;
+        }
+        
+        .empty-cart {
+            text-align: center;
+            padding: 30px 15px;
+            color: #95a5a6;
+        }
+        
+        .empty-cart i {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            opacity: 0.5;
+        }
+        
+        /* 管理员模式样式 */
+        .admin-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            margin-bottom: 20px;
+        }
+        
+        .admin-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        
+        .admin-btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .admin-btn-add {
+            background: #2ecc71;
+            color: white;
+        }
+        
+        .admin-btn-add:hover {
+            background: #27ae60;
+        }
+        
+        .admin-btn-reset {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .admin-btn-reset:hover {
+            background: #c0392b;
+        }
+        
+        .admin-btn-backup {
+            background: #3498db;
+            color: white;
+        }
+        
+        .admin-btn-backup:hover {
+            background: #2980b9;
+        }
+        
+        .admin-btn-restore {
+            background: #9b59b6;
+            color: white;
+        }
+        
+        .admin-btn-restore:hover {
+            background: #8e44ad;
+        }
+        
+        .item-editor {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .editor-title {
+            font-size: 1.3rem;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .form-input, .form-textarea, .form-select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-input:focus, .form-textarea:focus, .form-select:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        
+        .form-textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        
+        .image-upload {
+            border: 2px dashed #bdc3c7;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .image-upload:hover {
+            border-color: #3498db;
+            background: #f8f9fa;
+        }
+        
+        .image-upload i {
+            font-size: 2rem;
+            color: #7f8c8d;
+            margin-bottom: 10px;
+        }
+        
+        .image-preview {
+            width: 100%;
+            max-height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        .editor-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .editor-btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .editor-btn-save {
+            background: #2ecc71;
+            color: white;
+        }
+        
+        .editor-btn-save:hover {
+            background: #27ae60;
+        }
+        
+        .editor-btn-cancel {
+            background: #95a5a6;
+            color: white;
+        }
+        
+        .editor-btn-cancel:hover {
+            background: #7f8c8d;
+        }
+        
+        .items-list {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+        
+        .items-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+        }
+        
+        .admin-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s ease;
+        }
+        
+        .admin-item:hover {
+            border-color: #3498db;
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.1);
+        }
+        
+        .admin-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .admin-item-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+        
+        .admin-item-price {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: #e74c3c;
+        }
+        
+        .admin-item-image {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .admin-item-description {
+            color: #7f8c8d;
+            font-size: 0.85rem;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+        
+        .admin-item-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .action-btn {
+            flex: 1;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+        
+        .action-btn-edit {
+            background: #3498db;
+            color: white;
+        }
+        
+        .action-btn-edit:hover {
+            background: #2980b9;
+        }
+        
+        .action-btn-delete {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .action-btn-delete:hover {
+            background: #c0392b;
+        }
+        
+        /* 登录面板 */
+        .login-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            max-width: 400px;
+            margin: 50px auto;
+            text-align: center;
+        }
+        
+        .login-title {
+            font-size: 1.8rem;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .login-input {
+            width: 100%;
+            padding: 12px 15px;
+            margin-bottom: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            background: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .login-btn:hover {
+            background: #27ae60;
+        }
+        
+        /* 消息提示 */
+        .alert-message {
+            position: fixed;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 20px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 2000;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+            animation: slideDown 0.3s ease;
+            transition: opacity 0.3s ease;
+            max-width: 90%;
+            text-align: center;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        @keyframes slideDown {
+            from {
+                top: -50px;
+                opacity: 0;
+            }
+            to {
+                top: 15px;
+                opacity: 1;
+            }
+        }
+        
+        footer {
+            text-align: center;
+            padding: 15px;
+            color: #7f8c8d;
+            font-size: 0.8rem;
+            margin-top: 20px;
+        }
+        
+        /* 移动端优化 */
+        @media (max-width: 768px) {
+            .menu-items, .items-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 10px !important;
+            }
+            
+            .item-image, .admin-item-image {
+                height: 110px !important;
+            }
+            
+            .item-name, .admin-item-name {
+                font-size: 1rem !important;
+            }
+            
+            .item-price, .admin-item-price {
+                font-size: 1.1rem !important;
+            }
+            
+            .item-controls {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .quantity-btn {
+                width: 28px !important;
+                height: 28px !important;
+            }
+            
+            .add-to-cart {
+                padding: 5px 8px !important;
+                font-size: 0.8rem !important;
+                width: 100%;
+                margin-top: 5px;
+            }
+            
+            .admin-actions {
+                flex-direction: column;
+            }
+            
+            .admin-btn, .action-btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .editor-buttons {
+                flex-direction: column;
+            }
+            
+            .container {
+                flex-direction: column;
+            }
+            
+            .cart-container {
+                position: static;
+                max-height: none;
+            }
+            
+            .mode-switch {
+                position: static;
+                margin-bottom: 15px;
+                display: flex;
+                justify-content: center;
+            }
+            
+            .mode-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+        
+        /* 滚动条样式 */
+        .cart-items::-webkit-scrollbar,
+        .menu-categories::-webkit-scrollbar {
+            height: 4px;
+            width: 4px;
+        }
+        
+        .cart-items::-webkit-scrollbar-track,
+        .menu-categories::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        .cart-items::-webkit-scrollbar-thumb,
+        .menu-categories::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 模式切换按钮 -->
+    <div class="mode-switch">
+        <button class="mode-btn" id="mode-toggle">
+            <i class="fas fa-user-cog"></i>
+            <span>进入管理模式</span>
+        </button>
+    </div>
+    
+    <!-- 客户模式 -->
+    <div id="customer-view" class="customer-view">
+        <div class="header">
+            <h1><i class="fas fa-utensils"></i> 我的私房菜展示</h1>
+            <p class="subtitle">用心烹制每一道菜，分享美食的快乐</p>
+            <div class="notice">
+                <i class="fas fa-info-circle"></i>
+                <strong>温馨提示：</strong> 本页面仅为厨艺展示与模拟点餐，仅供好友娱乐。如需真实品尝，请联系我预约哦！
+            </div>
+        </div>
+        
+        <div class="container">
+            <!-- 菜单区域 -->
+            <div class="menu-section">
+                <h2 class="section-title"><i class="fas fa-book-open"></i> 美味菜单</h2>
+                
+                <div class="menu-categories">
+                    <button class="category-btn active" data-category="all">全部菜品</button>
+                    <button class="category-btn" data-category="热菜">热菜</button>
+                    <button class="category-btn" data-category="凉菜">凉菜</button>
+                    <button class="category-btn" data-category="汤羹">汤羹</button>
+                    <button class="category-btn" data-category="甜品">甜品</button>
+                    <button class="category-btn" data-category="主食">主食</button>
+                </div>
+                
+                <div class="menu-items" id="menu-items">
+                    <!-- 菜品会通过JavaScript动态加载 -->
+                </div>
+            </div>
+            
+            <!-- 购物车区域 -->
+            <div class="cart-section">
+                <div class="cart-container">
+                    <h2 class="section-title"><i class="fas fa-shopping-cart"></i> 点餐车</h2>
+                    
+                    <div class="cart-items" id="cart-items">
+                        <div class="empty-cart" id="empty-cart">
+                            <i class="fas fa-shopping-basket"></i>
+                            <p>点餐车还是空的<br>快挑选你喜欢的美食吧！</p>
+                        </div>
+                    </div>
+                    
+                    <div class="cart-total" id="cart-total" style="display: none;">
+                        <div class="total-row">
+                            <span>菜品数量：</span>
+                            <span id="item-count">0</span>
+                        </div>
+                        <div class="total-row">
+                            <span>菜品总价：</span>
+                            <span id="total-price">¥0.00</span>
+                        </div>
+                        <div class="total-row total-amount">
+                            <span>模拟订单总额：</span>
+                            <span id="final-price">¥0.00</span>
+                        </div>
+                    </div>
+                    
+                    <div class="cart-actions">
+                        <button class="btn btn-secondary" id="clear-cart">
+                            <i class="fas fa-trash-alt"></i> 清空点餐车
+                        </button>
+                        <button class="btn btn-primary" id="submit-order">
+                            <i class="fas fa-paper-plane"></i> 提交意向订单
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 管理员模式 -->
+    <div id="admin-view" class="admin-view">
+        <!-- 登录面板 -->
+        <div id="login-panel" class="login-panel">
+            <h2 class="login-title"><i class="fas fa-lock"></i> 管理模式登录</h2>
+            <p style="margin-bottom: 20px; color: #7f8c8d;">请输入管理密码以修改菜品</p>
+            <input type="password" id="admin-password" class="login-input" placeholder="请输入管理密码" value="123456">
+            <button class="login-btn" id="login-btn">
+                <i class="fas fa-sign-in-alt"></i> 登录管理模式
+            </button>
+        </div>
+        
+        <!-- 管理面板 -->
+        <div id="admin-panel" class="admin-panel" style="display: none;">
+            <div class="header">
+                <h1><i class="fas fa-user-cog"></i> 菜品管理系统</h1>
+                <p class="subtitle">在这里管理你的菜单，可以添加、编辑或删除菜品</p>
+            </div>
+            
+            <div class="admin-actions">
+                <button class="admin-btn admin-btn-add" id="add-item-btn">
+                    <i class="fas fa-plus"></i> 添加新菜品
+                </button>
+                <button class="admin-btn admin-btn-reset" id="reset-menu-btn">
+                    <i class="fas fa-redo"></i> 恢复默认菜单
+                </button>
+                <button class="admin-btn admin-btn-backup" id="backup-btn">
+                    <i class="fas fa-download"></i> 备份数据
+                </button>
+                <button class="admin-btn admin-btn-restore" id="restore-btn">
+                    <i class="fas fa-upload"></i> 恢复数据
+                </button>
+            </div>
+            
+            <!-- 菜品编辑器 -->
+            <div id="item-editor" class="item-editor" style="display: none;">
+                <h3 class="editor-title"><i class="fas fa-edit"></i> 编辑菜品</h3>
+                <input type="hidden" id="edit-item-id">
+                
+                <div class="form-group">
+                    <label class="form-label">菜品名称</label>
+                    <input type="text" id="edit-name" class="form-input" placeholder="例如：招牌红烧肉">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">菜品描述</label>
+                    <textarea id="edit-description" class="form-textarea" placeholder="描述菜品的特色、口味等"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">价格</label>
+                    <input type="number" id="edit-price" class="form-input" placeholder="例如：68" min="0" step="0.01">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">菜品分类</label>
+                    <select id="edit-category" class="form-select">
+                        <option value="热菜">热菜</option>
+                        <option value="凉菜">凉菜</option>
+                        <option value="汤羹">汤羹</option>
+                        <option value="甜品">甜品</option>
+                        <option value="主食">主食</option>
+                        <option value="其他">其他</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">菜品图片</label>
+                    <div class="image-upload" id="image-upload-area">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>点击上传图片，或拖拽图片到这里</p>
+                        <p style="font-size: 0.8rem; color: #95a5a6; margin-top: 5px;">支持 JPG, PNG 格式</p>
+                    </div>
+                    <input type="file" id="image-input" accept="image/*" style="display: none;">
+                    <img id="image-preview" class="image-preview" src="" alt="图片预览">
+                    <input type="hidden" id="edit-image" value="">
+                </div>
+                
+                <div class="editor-buttons">
+                    <button class="editor-btn editor-btn-save" id="save-item-btn">
+                        <i class="fas fa-save"></i> 保存菜品
+                    </button>
+                    <button class="editor-btn editor-btn-cancel" id="cancel-edit-btn">
+                        <i class="fas fa-times"></i> 取消编辑
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 菜品列表 -->
+            <div class="items-list">
+                <h3 class="section-title"><i class="fas fa-list"></i> 菜品列表</h3>
+                <div class="items-grid" id="admin-items-list">
+                    <!-- 管理模式的菜品列表会动态加载 -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>© 2023 我的私房菜 | 本页面仅为厨艺展示，非营业用途</p>
+        <p>分享链接：<span id="page-url"></span></p>
+    </footer>
+
+    <script>
+        // 默认菜品数据
+        const defaultMenuItems = [
+            {
+                id: 1,
+                name: "招牌红烧肉",
+                description: "精选五花肉，慢火炖煮，肥而不腻，入口即化",
+                price: 68,
+                image: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
+                category: "热菜"
+            },
+            {
+                id: 2,
+                name: "清蒸鲈鱼",
+                description: "鲜活鲈鱼清蒸，肉质鲜嫩，原汁原味",
+                price: 88,
+                image: "https://images.unsplash.com/photo-1563379091339-03246963d9d6?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
+                category: "热菜"
+            },
+            {
+                id: 3,
+                name: "凉拌黄瓜",
+                description: "爽脆黄瓜，酸辣开胃，夏日必备",
+                price: 18,
+                image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
+                category: "凉菜"
+            },
+            {
+                id: 4,
+                name: "番茄鸡蛋汤",
+                description: "家常美味，酸甜可口，营养丰富",
+                price: 25,
+                image: "https://images.unsplash.com/photo-1547592166-23ac45744acd?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
+                category: "汤羹"
+            },
+            {
+                id: 5,
+                name: "芒果布丁",
+                description: "新鲜芒果制作，口感细腻，甜而不腻",
+                price: 32,
+                image: "https://images.unsplash.com/photo-1565958011703-44f9829ba187?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
+                category: "甜品"
+            }
+        ];
+
+        // 管理密码
+        const ADMIN_PASSWORD = "123456";
+        
+        // 状态变量
+        let menuItems = [];
+        let cart = [];
+        let isAdminMode = false;
+        let isEditing = false;
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadMenuItems();
+            loadCart();
+            setupEventListeners();
+            updatePageURL();
+        });
+        
+        // 加载菜单数据
+        function loadMenuItems() {
+            const saved = localStorage.getItem('privateChefMenu');
+            if (saved) {
+                try {
+                    menuItems = JSON.parse(saved);
+                } catch (e) {
+                    console.error('解析菜单数据失败，使用默认数据', e);
+                    menuItems = [...defaultMenuItems];
+                    saveMenuItems();
+                }
+            } else {
+                menuItems = [...defaultMenuItems];
+                saveMenuItems();
+            }
+            
+            if (isAdminMode && isAdminLoggedIn()) {
+                displayAdminItems();
+            } else {
+                displayMenuItems();
+                displayCartItems();
+            }
+        }
+        
+        // 保存菜单数据
+        function saveMenuItems() {
+            localStorage.setItem('privateChefMenu', JSON.stringify(menuItems));
+        }
+        
+        // 加载购物车
+        function loadCart() {
+            const saved = localStorage.getItem('privateChefCart');
+            cart = saved ? JSON.parse(saved) : [];
+        }
+        
+        // 保存购物车
+        function saveCart() {
+            localStorage.setItem('privateChefCart', JSON.stringify(cart));
+        }
+        
+        // 显示客户模式的菜单
+        function displayMenuItems(filter = 'all') {
+            const menuContainer = document.getElementById('menu-items');
+            menuContainer.innerHTML = '';
+            
+            const filteredItems = filter === 'all' 
+                ? menuItems 
+                : menuItems.filter(item => item.category === filter);
+            
+            if (filteredItems.length === 0) {
+                menuContainer.innerHTML = '<p style="text-align:center; width:100%; padding:40px; color:#95a5a6;">暂无此类菜品</p>';
+                return;
+            }
+            
+            filteredItems.forEach(item => {
+                const cartItem = cart.find(cartItem => cartItem.id === item.id);
+                const quantity = cartItem ? cartItem.quantity : 0;
+                
+                const itemElement = document.createElement('div');
+                itemElement.className = 'menu-item';
+                itemElement.innerHTML = `
+                    <div class="item-image">
+                        <img src="${item.image}" alt="${item.name}" loading="lazy">
+                    </div>
+                    <div class="item-details">
+                        <h3 class="item-name">${item.name}</h3>
+                        <p class="item-description">${item.description}</p>
+                        <div class="item-footer">
+                            <div class="item-price">¥${item.price.toFixed(2)}</div>
+                            <div class="item-controls">
+                                <button class="quantity-btn minus-btn" data-id="${item.id}">-</button>
+                                <span class="item-quantity">${quantity}</span>
+                                <button class="quantity-btn plus-btn" data-id="${item.id}">+</button>
+                                <button class="add-to-cart" data-id="${item.id}">
+                                    <i class="fas fa-cart-plus"></i> 加入
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                menuContainer.appendChild(itemElement);
+            });
+        }
+        
+        // 显示管理模式的菜品列表
+        function displayAdminItems() {
+            const adminContainer = document.getElementById('admin-items-list');
+            adminContainer.innerHTML = '';
+            
+            if (menuItems.length === 0) {
+                adminContainer.innerHTML = '<p style="text-align:center; width:100%; padding:40px; color:#95a5a6;">暂无菜品，请点击"添加新菜品"按钮</p>';
+                return;
+            }
+            
+            menuItems.forEach(item => {
+                const itemElement = document.createElement('div');
+                itemElement.className = 'admin-item';
+                itemElement.innerHTML = `
+                    <div class="admin-item-header">
+                        <h4 class="admin-item-name">${item.name}</h4>
+                        <div class="admin-item-price">¥${item.price.toFixed(2)}</div>
+                    </div>
+                    <img src="${item.image}" alt="${item.name}" class="admin-item-image" loading="lazy">
+                    <p class="admin-item-description">${item.description}</p>
+                    <div class="admin-item-info">
+                        <small style="color:#95a5a6;">分类：${item.category}</small>
+                    </div>
+                    <div class="admin-item-actions">
+                        <button class="action-btn action-btn-edit" data-id="${item.id}">
+                            <i class="fas fa-edit"></i> 编辑
+                        </button>
+                        <button class="action-btn action-btn-delete" data-id="${item.id}">
+                            <i class="fas fa-trash"></i> 删除
+                        </button>
+                    </div>
+                `;
+                
+                adminContainer.appendChild(itemElement);
+            });
+        }
+        
+        // 显示购物车
+        function displayCartItems() {
+            const cartContainer = document.getElementById('cart-items');
+            const cartTotal = document.getElementById('cart-total');
+            const emptyCart = document.getElementById('empty-cart');
+            
+            if (cart.length === 0) {
+                cartTotal.style.display = 'none';
+                emptyCart.style.display = 'block';
+                cartContainer.innerHTML = '<div class="empty-cart" id="empty-cart"><i class="fas fa-shopping-basket"></i><p>点餐车还是空的<br>快挑选你喜欢的美食吧！</p></div>';
+                return;
+            }
+            
+            emptyCart.style.display = 'none';
+            cartTotal.style.display = 'block';
+            
+            let cartHTML = '';
+            let totalPrice = 0;
+            let totalItems = 0;
+            
+            cart.forEach(cartItem => {
+                const menuItem = menuItems.find(item => item.id === cartItem.id);
+                if (!menuItem) return;
+                
+                const itemTotal = menuItem.price * cartItem.quantity;
+                totalPrice += itemTotal;
+                totalItems += cartItem.quantity;
+                
+                cartHTML += `
+                    <div class="cart-item">
+                        <div class="cart-item-info">
+                            <h4>${menuItem.name}</h4>
+                            <div class="cart-item-price">¥${menuItem.price.toFixed(2)} × ${cartItem.quantity}</div>
+                        </div>
+                        <div class="cart-item-controls">
+                            <button class="quantity-btn cart-minus-btn" data-id="${cartItem.id}">-</button>
+                            <span style="min-width:30px; text-align:center;">${cartItem.quantity}</span>
+                            <button class="quantity-btn cart-plus-btn" data-id="${cartItem.id}">+</button>
+                            <button class="quantity-btn cart-remove-btn" data-id="${cartItem.id}" style="background:#ffeaea; color:#e74c3c;">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            cartContainer.innerHTML = cartHTML;
+            document.getElementById('item-count').textContent = totalItems;
+            document.getElementById('total-price').textContent = `¥${totalPrice.toFixed(2)}`;
+            document.getElementById('final-price').textContent = `¥${totalPrice.toFixed(2)}`;
+        }
+        
+        // 设置所有事件监听器
+        function setupEventListeners() {
+            // 模式切换
+            document.getElementById('mode-toggle').addEventListener('click', toggleMode);
+            
+            // 客户模式事件
+            setupCustomerEvents();
+            
+            // 管理员模式事件
+            setupAdminEvents();
+        }
+        
+        // 设置客户模式事件
+        function setupCustomerEvents() {
+            // 分类筛选
+            document.querySelectorAll('.category-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    displayMenuItems(this.dataset.category);
+                });
+            });
+            
+            // 菜单项事件委托
+            document.getElementById('menu-items').addEventListener('click', function(e) {
+                const target = e.target;
+                const plusBtn = target.closest('.plus-btn');
+                const minusBtn = target.closest('.minus-btn');
+                const addToCartBtn = target.closest('.add-to-cart');
+                
+                if (plusBtn) {
+                    const id = parseInt(plusBtn.dataset.id);
+                    addToCart(id, 1);
+                }
+                
+                if (minusBtn) {
+                    const id = parseInt(minusBtn.dataset.id);
+                    updateCartItem(id, -1);
+                }
+                
+                if (addToCartBtn) {
+                    const id = parseInt(addToCartBtn.dataset.id);
+                    addToCart(id, 1);
+                }
+            });
+            
+            // 购物车事件委托
+            document.getElementById('cart-items').addEventListener('click', function(e) {
+                const target = e.target;
+                const plusBtn = target.closest('.cart-plus-btn');
+                const minusBtn = target.closest('.cart-minus-btn');
+                const removeBtn = target.closest('.cart-remove-btn');
+                
+                if (plusBtn) {
+                    const id = parseInt(plusBtn.dataset.id);
+                    addToCart(id, 1);
+                }
+                
+                if (minusBtn) {
+                    const id = parseInt(minusBtn.dataset.id);
+                    updateCartItem(id, -1);
+                }
+                
+                if (removeBtn) {
+                    const id = parseInt(removeBtn.dataset.id);
+                    removeFromCart(id);
+                }
+            });
+            
+            // 清空购物车
+            document.getElementById('clear-cart').addEventListener('click', clearCart);
+            
+            // 提交订单
+            document.getElementById('submit-order').addEventListener('click', submitOrder);
+        }
+        
+        // 设置管理员模式事件
+        function setupAdminEvents() {
+            // 登录
+            document.getElementById('login-btn').addEventListener('click', loginAdmin);
+            
+            // 管理按钮
+            document.getElementById('add-item-btn').addEventListener('click', showAddItemForm);
+            document.getElementById('reset-menu-btn').addEventListener('click', resetMenu);
+            document.getElementById('backup-btn').addEventListener('click', backupData);
+            document.getElementById('restore-btn').addEventListener('click', () => {
+                document.getElementById('restore-file').click();
+            });
+            
+            // 文件恢复输入
+            const restoreInput = document.createElement('input');
+            restoreInput.type = 'file';
+            restoreInput.accept = '.json';
+            restoreInput.id = 'restore-file';
+            restoreInput.style.display = 'none';
+            restoreInput.addEventListener('change', restoreData);
+            document.body.appendChild(restoreInput);
+            
+            // 编辑器按钮
+            document.getElementById('save-item-btn').addEventListener('click', saveItem);
+            document.getElementById('cancel-edit-btn').addEventListener('click', cancelEdit);
+            
+            // 图片上传
+            document.getElementById('image-upload-area').addEventListener('click', () => {
+                document.getElementById('image-input').click();
+            });
+            
+            document.getElementById('image-input').addEventListener('change', handleImageUpload);
+            
+            // 拖拽上传
+            const uploadArea = document.getElementById('image-upload-area');
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.style.borderColor = '#3498db';
+                uploadArea.style.background = '#f0f7ff';
+            });
+            
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.style.borderColor = '#bdc3c7';
+                uploadArea.style.background = '';
+            });
+            
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.style.borderColor = '#bdc3c7';
+                uploadArea.style.background = '';
+                
+                if (e.dataTransfer.files.length > 0) {
+                    const file = e.dataTransfer.files[0];
+                    if (file.type.startsWith('image/')) {
+                        handleImageFile(file);
+                    } else {
+                        showMessage('请选择图片文件', 'error');
+                    }
+                }
+            });
+            
+            // 菜品列表事件委托
+            document.getElementById('admin-items-list').addEventListener('click', function(e) {
+                const target = e.target;
+                const editBtn = target.closest('.action-btn-edit');
+                const deleteBtn = target.closest('.action-btn-delete');
+                
+                if (editBtn) {
+                    const id = parseInt(editBtn.dataset.id);
+                    editItem(id);
+                }
+                
+                if (deleteBtn) {
+                    const id = parseInt(deleteBtn.dataset.id);
+                    deleteItem(id);
+                }
+            });
+        }
+        
+        // 切换模式
+        function toggleMode() {
+            isAdminMode = !isAdminMode;
+            
+            const customerView = document.getElementById('customer-view');
+            const adminView = document.getElementById('admin-view');
+            const modeToggle = document.getElementById('mode-toggle');
+            
+            if (isAdminMode) {
+                customerView.style.display = 'none';
+                adminView.style.display = 'block';
+                modeToggle.innerHTML = '<i class="fas fa-utensils"></i><span>返回点餐模式</span>';
+                
+                // 检查是否已登录
+                if (!isAdminLoggedIn()) {
+                    document.getElementById('login-panel').style.display = 'block';
+                    document.getElementById('admin-panel').style.display = 'none';
+                } else {
+                    document.getElementById('login-panel').style.display = 'none';
+                    document.getElementById('admin-panel').style.display = 'block';
+                    displayAdminItems();
+                }
+            } else {
+                customerView.style.display = 'block';
+                adminView.style.display = 'none';
+                modeToggle.innerHTML = '<i class="fas fa-user-cog"></i><span>进入管理模式</span>';
+                displayMenuItems();
+                displayCartItems();
+            }
+        }
+        
+        // 检查管理员登录状态
+        function isAdminLoggedIn() {
+            return localStorage.getItem('adminLoggedIn') === 'true';
+        }
+        
+        // 管理员登录
+        function loginAdmin() {
+            const password = document.getElementById('admin-password').value;
+            
+            if (password === ADMIN_PASSWORD) {
+                localStorage.setItem('adminLoggedIn', 'true');
+                document.getElementById('login-panel').style.display = 'none';
+                document.getElementById('admin-panel').style.display = 'block';
+                displayAdminItems();
+                showMessage('登录成功！', 'success');
+            } else {
+                showMessage('密码错误，请重试', 'error');
+            }
+        }
+        
+        // 购物车功能
+        function addToCart(id, quantity) {
+            const existingItem = cart.find(item => item.id === id);
+            
+            if (existingItem) {
+                existingItem.quantity += quantity;
+            } else {
+                cart.push({ id, quantity });
+            }
+            
+            saveCart();
+            if (!isAdminMode) {
+                displayMenuItems(document.querySelector('.category-btn.active')?.dataset.category || 'all');
+                displayCartItems();
+                showMessage('已添加到点餐车', 'success');
+            }
+        }
+        
+        function updateCartItem(id, change) {
+            const item = cart.find(item => item.id === id);
+            
+            if (item) {
+                item.quantity += change;
+                
+                if (item.quantity <= 0) {
+                    removeFromCart(id);
+                } else {
+                    saveCart();
+                    if (!isAdminMode) {
+                        displayMenuItems(document.querySelector('.category-btn.active')?.dataset.category || 'all');
+                        displayCartItems();
+                    }
+                }
+            }
+        }
+        
+        function removeFromCart(id) {
+            cart = cart.filter(item => item.id !== id);
+            saveCart();
+            if (!isAdminMode) {
+                displayMenuItems(document.querySelector('.category-btn.active')?.dataset.category || 'all');
+                displayCartItems();
+                showMessage('已从点餐车移除', 'info');
+            }
+        }
+        
+        function clearCart() {
+            if (cart.length === 0) {
+                showMessage('点餐车已经是空的啦！', 'info');
+                return;
+            }
+            
+            if (confirm('确定要清空点餐车吗？所有已选菜品将被移除。')) {
+                cart = [];
+                saveCart();
+                if (!isAdminMode) {
+                    displayMenuItems(document.querySelector('.category-btn.active')?.dataset.category || 'all');
+                    displayCartItems();
+                    showMessage('点餐车已清空！', 'success');
+                }
+            }
+        }
+        
+        function submitOrder() {
+            if (cart.length === 0) {
+                showMessage('点餐车是空的，请先添加菜品哦！', 'info');
+                return;
+            }
+            
+            let orderDetails = "【模拟订单详情】\n\n";
+            let totalPrice = 0;
+            
+            cart.forEach(cartItem => {
+                const menuItem = menuItems.find(item => item.id === cartItem.id);
+                if (menuItem) {
+                    const itemTotal = menuItem.price * cartItem.quantity;
+                    totalPrice += itemTotal;
+                    orderDetails += `${menuItem.name} × ${cartItem.quantity} = ¥${itemTotal.toFixed(2)}\n`;
+                }
+            });
+            
+            orderDetails += `\n订单总计：¥${totalPrice.toFixed(2)}`;
+            orderDetails += "\n\n（此为模拟订单，仅用于展示）";
+            
+            alert(orderDetails);
+            console.log("订单已提交:", orderDetails);
+        }
+        
+        // 管理员功能
+        function showAddItemForm() {
+            isEditing = false;
+            document.getElementById('item-editor').style.display = 'block';
+            document.getElementById('edit-item-id').value = '';
+            document.getElementById('edit-name').value = '';
+            document.getElementById('edit-description').value = '';
+            document.getElementById('edit-price').value = '';
+            document.getElementById('edit-category').value = '热菜';
+            document.getElementById('edit-image').value = '';
+            document.getElementById('image-preview').style.display = 'none';
+            document.getElementById('image-preview').src = '';
+            
+            // 滚动到编辑器
+            document.getElementById('item-editor').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        function editItem(id) {
+            const item = menuItems.find(item => item.id === id);
+            if (!item) return;
+            
+            isEditing = true;
+            document.getElementById('item-editor').style.display = 'block';
+            document.getElementById('edit-item-id').value = item.id;
+            document.getElementById('edit-name').value = item.name;
+            document.getElementById('edit-description').value = item.description;
+            document.getElementById('edit-price').value = item.price;
+            document.getElementById('edit-category').value = item.category;
+            document.getElementById('edit-image').value = item.image;
+            
+            // 显示图片预览
+            const preview = document.getElementById('image-preview');
+            preview.src = item.image;
+            preview.style.display = 'block';
+            
+            // 滚动到编辑器
+            document.getElementById('item-editor').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        function saveItem() {
+            const id = document.getElementById('edit-item-id').value;
+            const name = document.getElementById('edit-name').value.trim();
+            const description = document.getElementById('edit-description').value.trim();
+            const price = parseFloat(document.getElementById('edit-price').value);
+            const category = document.getElementById('edit-category').value;
+            const image = document.getElementById('edit-image').value;
+            
+            // 验证输入
+            if (!name) {
+                showMessage('请输入菜品名称', 'error');
+                return;
+            }
+            
+            if (!description) {
+                showMessage('请输入菜品描述', 'error');
+                return;
+            }
+            
+            if (!price || price <= 0) {
+                showMessage('请输入有效的价格', 'error');
+                return;
+            }
+            
+            if (!image) {
+                showMessage('请上传菜品图片', 'error');
+                return;
+            }
+            
+            if (isEditing && id) {
+                // 编辑现有菜品
+                const index = menuItems.findIndex(item => item.id == id);
+                if (index !== -1) {
+                    menuItems[index] = { 
+                        id: parseInt(id), 
+                        name, 
+                        description, 
+                        price, 
+                        category, 
+                        image 
+                    };
+                }
+                showMessage('菜品更新成功', 'success');
+            } else {
+                // 添加新菜品
+                const newId = menuItems.length > 0 ? Math.max(...menuItems.map(item => item.id)) + 1 : 1;
+                menuItems.push({ 
+                    id: newId, 
+                    name, 
+                    description, 
+                    price, 
+                    category, 
+                    image 
+                });
+                showMessage('菜品添加成功', 'success');
+            }
+            
+            saveMenuItems();
+            displayAdminItems();
+            cancelEdit();
+        }
+        
+        function cancelEdit() {
+            document.getElementById('item-editor').style.display = 'none';
+            isEditing = false;
+        }
+        
+        function deleteItem(id) {
+            if (!confirm('确定要删除这个菜品吗？此操作不可恢复。')) {
+                return;
+            }
+            
+            menuItems = menuItems.filter(item => item.id !== id);
+            saveMenuItems();
+            displayAdminItems();
+            showMessage('菜品删除成功', 'success');
+        }
+        
+        function resetMenu() {
+            if (!confirm('确定要恢复默认菜单吗？所有自定义菜品将被删除。')) {
+                return;
+            }
+            
+            menuItems = [...defaultMenuItems];
+            saveMenuItems();
+            displayAdminItems();
+            showMessage('菜单已恢复为默认设置', 'success');
+        }
+        
+        // 图片上传处理
+        function handleImageUpload(e) {
+            const file = e.target.files[0];
+            if (file) {
+                handleImageFile(file);
+            }
+        }
+        
+        function handleImageFile(file) {
+            // 检查文件类型
+            if (!file.type.startsWith('image/')) {
+                showMessage('请选择图片文件（JPG、PNG等）', 'error');
+                return;
+            }
+            
+            // 检查文件大小（限制为5MB）
+            if (file.size > 5 * 1024 * 1024) {
+                showMessage('图片大小不能超过5MB', 'error');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const imageData = e.target.result;
+                document.getElementById('edit-image').value = imageData;
+                
+                // 显示预览
+                const preview = document.getElementById('image-preview');
+                preview.src = imageData;
+                preview.style.display = 'block';
+                
+                showMessage('图片上传成功', 'success');
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        // 数据备份和恢复
+        function backupData() {
+            const data = {
+                menuItems: menuItems,
+                timestamp: new Date().toISOString()
+            };
+            
+            const dataStr = JSON.stringify(data, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            
+            const url = URL.createObjectURL(dataBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `menu-backup-${new Date().toISOString().slice(0,10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showMessage('数据备份成功，文件已下载', 'success');
+        }
+        
+        function restoreData(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    
+                    if (!data.menuItems || !Array.isArray(data.menuItems)) {
+                        throw new Error('文件格式不正确');
+                    }
+                    
+                    if (confirm('确定要恢复备份数据吗？当前菜单将被替换。')) {
+                        menuItems = data.menuItems;
+                        saveMenuItems();
+                        displayAdminItems();
+                        showMessage('数据恢复成功', 'success');
+                    }
+                } catch (error) {
+                    console.error('恢复数据失败:', error);
+                    showMessage('恢复数据失败，文件可能已损坏', 'error');
+                }
+            };
+            reader.readAsText(file);
+            
+            // 重置文件输入
+            e.target.value = '';
+        }
+        
+        // 显示消息
+        function showMessage(message, type = 'info') {
+            // 移除已存在的消息
+            const existingMessage = document.querySelector('.alert-message');
+            if (existingMessage) {
+                existingMessage.remove();
+            }
+            
+            // 创建新消息
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `alert-message alert-${type}`;
+            messageDiv.innerHTML = `
+                <i class="fas ${getMessageIcon(type)}"></i>
+                <span>${message}</span>
+            `;
+            
+            // 添加到页面
+            document.body.appendChild(messageDiv);
+            
+            // 3秒后自动消失
+            setTimeout(() => {
+                if (messageDiv.parentNode) {
+                    messageDiv.style.opacity = '0';
+                    setTimeout(() => messageDiv.remove(), 300);
+                }
+            }, 3000);
+        }
+        
+        function getMessageIcon(type) {
+            switch(type) {
+                case 'success': return 'fa-check-circle';
+                case 'error': return 'fa-exclamation-circle';
+                case 'warning': return 'fa-exclamation-triangle';
+                default: return 'fa-info-circle';
+            }
+        }
+        
+        // 显示当前页面URL
+        function updatePageURL() {
+            document.getElementById('page-url').textContent = window.location.href;
+        }
+    </script>
+</body>
+</html>
